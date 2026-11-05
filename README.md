@@ -138,6 +138,7 @@ Planned features include:
 
 FUTURE ARCHITECTURE
 -------------------
+
 The planned application will follow this basic flow:
 
 User
