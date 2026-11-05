@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClaimFlow - Insurance Claims</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CF</div>
+        <div><h2>ClaimFlow</h2><p>Claims Management</p></div>
+      </div>
+      <nav>
+        <button class="nav-link active" data-page="dashboard">Dashboard</button>
+        <button class="nav-link" data-page="claims">All Claims</button>
+        <button class="nav-link" data-page="submit">Submit a Claim</button>
+      </nav>
+      <div class="sidebar-note">
+        <strong>Student Project</strong>
+        <p>Basic prototype for insurance claim tracking.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">INSURANCE CLAIMS PORTAL</p>
+          <h1 id="page-heading">Dashboard</h1>
+        </div>
+        <div class="user-chip"><span class="user-dot">A</span><span>Demo Admin</span></div>
+      </header>
+
+      <section id="dashboard-page" class="page">
+        <div class="welcome">
+          <div>
+            <h2>Welcome to ClaimFlow</h2>
+            <p>View claims, check their status and manage basic claim records.</p>
+          </div>
+          <button class="primary-button" data-go="submit">+ New Claim</button>
+        </div>
+
+        <div class="stats">
+          <article class="stat-card"><p>Total Claims</p><strong id="total-count">0</strong><span class="stat-label">All submitted records</span></article>
+          <article class="stat-card"><p>Pending</p><strong id="pending-count">0</strong><span class="stat-label">Waiting for review</span></article>
+          <article class="stat-card"><p>Approved</p><strong id="approved-count">0</strong><span class="stat-label">Accepted claims</span></article>
+          <article class="stat-card"><p>Flagged</p><strong id="flagged-count">0</strong><span class="stat-label">Needs extra checking</span></article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div><h2>Recent Claims</h2><p>Latest claim records in this demo</p></div>
+            <button class="text-button" data-go="claims">View all claims →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Claim ID</th><th>Policy No.</th><th>Claimant</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="recent-claims"></tbody>
+            </table>
+          </div>
+        </section>
+        <p class="footnote">Demo data only. This prototype does not process real insurance claims.</p>
+      </section>
+
+      <section id="claims-page" class="page hidden">
+        <section class="panel">
+          <div class="panel-heading">
+            <div><h2>All Claims</h2><p>Search records and update claim status.</p></div>
+            <input id="claim-search" class="search-box" type="search" placeholder="Search by name, ID or policy">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Claim ID</th><th>Policy No.</th><th>Claimant</th><th>Type</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="all-claims"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="submit-page" class="page hidden">
+        <section class="panel form-panel">
+          <div class="panel-heading">
+            <div><h2>Submit an Insurance Claim</h2><p>Enter the details below to create a demo record.</p></div>
+          </div>
+          <form id="claim-form">
+            <div class="form-grid">
+              <label>Claimant name<input name="name" required placeholder="e.g. Rahul Sharma"></label>
+              <label>Policy number<input name="policy" required placeholder="e.g. POL-10021"></label>
+              <label>Claim type<select name="type" required><option value="">Choose type</option><option>Vehicle</option><option>Health</option><option>Property</option><option>Travel</option></select></label>
+              <label>Claim amount (₹)<input name="amount" type="number" min="1" required placeholder="e.g. 25000"></label>
+              <label class="full-width">Claim description<textarea name="description" rows="4" required placeholder="Briefly explain what happened"></textarea></label>
+            </div>
+            <div id="form-message" class="form-message" role="status"></div>
+            <div class="form-actions"><button type="reset" class="secondary-button">Clear form</button><button type="submit" class="primary-button">Submit Claim</button></div>
+          </form>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
