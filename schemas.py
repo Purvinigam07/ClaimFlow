@@ -5,6 +5,10 @@ class LoginIn(BaseModel):
     email: str
     password: str
 
+class RegisterIn(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
 
 class ClaimCreate(BaseModel):
     policy_id: int
