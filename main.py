@@ -43,6 +43,7 @@ from models import (
 
 from schemas import (
     LoginIn,
+    RegisterIn,
     ClaimCreate,
     StatusIn,
     AssessmentIn,
@@ -578,6 +579,73 @@ def health():
     return {
         "status": "ok",
         "service": "ClaimFlow API"
+    }
+
+
+# =========================================================
+# PUBLIC REGISTRATION
+# =========================================================
+
+@app.post("/api/auth/register")
+def register_user(
+    data: RegisterIn,
+    db: Session = Depends(get_db)
+):
+    existing = db.query(User).filter(
+        User.email == data.email
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
+    policyholder_role = db.query(Role).filter(
+        Role.name == "Policyholder"
+    ).first()
+
+    if not policyholder_role:
+        raise HTTPException(
+            status_code=500,
+            detail="Policyholder role not found"
+        )
+
+    if len(data.password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters"
+        )
+
+    user = User(
+        name=data.name,
+        email=data.email,
+        password_hash=hash_password(data.password),
+        role_id=policyholder_role.id,
+        active=True
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    audit(
+        db,
+        user,
+        "REGISTER",
+        "User",
+        user.id,
+        "New public user registered as Policyholder"
+    )
+
+    return {
+        "message": "Registration successful",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": "Policyholder"
+        }
     }
 
 
