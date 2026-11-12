@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimFlow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login" class="center">
+  <div class="card login">
+    <h1>ClaimFlow</h1>
+
+    <p>
+      Insurance Claims Processing & Fraud Control
+    </p>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button onclick="login()">Login</button>
+
+    <small>
+      Demo: admin@claimflow.local / Admin@123
+    </small>
+
+    <div id="loginMsg"></div>
+  </div>
+</div>
+
+
+<!-- MAIN APPLICATION -->
+<div id="app" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside>
+
+    <h2>ClaimFlow</h2>
+
+    <div id="userBox"></div>
+
+    <button onclick="show('dashboard')">
+      Dashboard
+    </button>
+
+    <button onclick="show('claims')">
+      Claims
+    </button>
+
+    <button onclick="show('submit')">
+      Submit Claim
+    </button>
+
+    <button onclick="show('audit')">
+      Audit Logs
+    </button>
+
+    <button class="logout" onclick="logout()">
+      Logout
+    </button>
+
+  </aside>
+
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+
+      <h1>Dashboard</h1>
+
+      <div class="stats">
+
+        <div>
+          Total Claims
+          <strong id="total">0</strong>
+        </div>
+
+        <div>
+          Pending
+          <strong id="pending">0</strong>
+        </div>
+
+        <div>
+          Flagged
+          <strong id="flagged">0</strong>
+        </div>
+
+        <div>
+          Settled
+          <strong id="settled">0</strong>
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <h2>ClaimFlow Workflow</h2>
+
+        <p>
+          Submission → Duplicate Check → Review →
+          Surveyor Assessment → Approval →
+          Settlement → Audit
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- CLAIMS -->
+    <section id="claims" class="hidden">
+
+      <h1>Claims</h1>
+
+      <div class="card">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Claim</th>
+              <th>Policy</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Risk</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="claimRows">
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+
+    <!-- SUBMIT CLAIM -->
+    <section id="submit" class="hidden">
+
+      <h1>Submit Claim</h1>
+
+      <div class="card form">
+
+        <select id="policy">
+        </select>
+
+        <input
+          id="type"
+          type="text"
+          placeholder="Claim type (e.g. Accident)"
+        >
+
+        <input
+          id="date"
+          type="date"
+        >
+
+        <input
+          id="amount"
+          type="number"
+          placeholder="Claim amount"
+        >
+
+        <textarea
+          id="desc"
+          placeholder="Describe the incident"
+        ></textarea>
+
+        <button onclick="submitClaim()">
+          Submit Claim
+        </button>
+
+        <div id="submitMsg"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- AUDIT LOGS -->
+    <section id="audit" class="hidden">
+
+      <h1>Audit Logs</h1>
+
+      <div class="card">
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>ID</th>
+              <th>Details</th>
+              <th>Time</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="auditRows">
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+<script src="script.js"></script>
+
+</body>
+</html>
