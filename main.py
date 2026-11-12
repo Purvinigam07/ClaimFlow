@@ -16,7 +16,6 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from passlib.context import CryptContext
 from jose import jwt
 
 from datetime import datetime, timedelta
@@ -25,6 +24,7 @@ from pathlib import Path
 import os
 import shutil
 import uuid
+import bcrypt
 
 from azure.storage.blob import BlobServiceClient
 from azure.cosmos import CosmosClient
@@ -77,10 +77,10 @@ app.add_middleware(
 # FILE UPLOADS
 # =========================================================
 
-BASE = Path(__file__).resolve().parent.parent
+# GitHub/Azure deployment has main.py at project root.
+BASE = Path(__file__).resolve().parent
 
 UPLOADS = BASE / "uploads"
-
 UPLOADS.mkdir(
     exist_ok=True
 )
@@ -96,19 +96,41 @@ app.mount(
 # DATABASE
 # =========================================================
 
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(
+    bind=engine
+)
 
 
 # =========================================================
 # AZURE BLOB STORAGE
 # =========================================================
 
-blob_service_client = BlobServiceClient.from_connection_string(
-    os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+storage_connection_string = os.getenv(
+    "AZURE_STORAGE_CONNECTION_STRING"
 )
 
-blob_container_client = blob_service_client.get_container_client(
-    os.getenv("AZURE_STORAGE_CONTAINER")
+storage_container_name = os.getenv(
+    "AZURE_STORAGE_CONTAINER"
+)
+
+if not storage_connection_string:
+    raise RuntimeError(
+        "AZURE_STORAGE_CONNECTION_STRING is not configured"
+    )
+
+if not storage_container_name:
+    raise RuntimeError(
+        "AZURE_STORAGE_CONTAINER is not configured"
+    )
+
+blob_service_client = BlobServiceClient.from_connection_string(
+    storage_connection_string
+)
+
+blob_container_client = (
+    blob_service_client.get_container_client(
+        storage_container_name
+    )
 )
 
 
@@ -116,16 +138,45 @@ blob_container_client = blob_service_client.get_container_client(
 # AZURE COSMOS DB
 # =========================================================
 
+cosmos_connection_string = os.getenv(
+    "AZURE_COSMOS_CONNECTION_STRING"
+)
+
+cosmos_database_name = os.getenv(
+    "AZURE_COSMOS_DATABASE"
+)
+
+cosmos_container_name = os.getenv(
+    "AZURE_COSMOS_CONTAINER"
+)
+
+if not cosmos_connection_string:
+    raise RuntimeError(
+        "AZURE_COSMOS_CONNECTION_STRING is not configured"
+    )
+
+if not cosmos_database_name:
+    raise RuntimeError(
+        "AZURE_COSMOS_DATABASE is not configured"
+    )
+
+if not cosmos_container_name:
+    raise RuntimeError(
+        "AZURE_COSMOS_CONTAINER is not configured"
+    )
+
 cosmos_client = CosmosClient.from_connection_string(
-    os.getenv("AZURE_COSMOS_CONNECTION_STRING")
+    cosmos_connection_string
 )
 
 cosmos_database = cosmos_client.get_database_client(
-    os.getenv("AZURE_COSMOS_DATABASE")
+    cosmos_database_name
 )
 
-cosmos_container = cosmos_database.get_container_client(
-    os.getenv("AZURE_COSMOS_CONTAINER")
+cosmos_container = (
+    cosmos_database.get_container_client(
+        cosmos_container_name
+    )
 )
 
 
@@ -133,17 +184,11 @@ cosmos_container = cosmos_database.get_container_client(
 # SECURITY
 # =========================================================
 
-pwd = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
-
-# JWT secret is now loaded from .env
 SECRET = os.getenv("JWT_SECRET")
 
 if not SECRET:
     raise RuntimeError(
-        "JWT_SECRET is not configured in .env"
+        "JWT_SECRET is not configured"
     )
 
 ALGO = "HS256"
@@ -151,6 +196,37 @@ ALGO = "HS256"
 oauth = OAuth2PasswordBearer(
     tokenUrl="/api/auth/token"
 )
+
+
+# =========================================================
+# PASSWORD FUNCTIONS
+# =========================================================
+
+def hash_password(password: str) -> str:
+
+    hashed = bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    )
+
+    return hashed.decode("utf-8")
+
+
+def verify_password(
+    password: str,
+    password_hash: str
+) -> bool:
+
+    try:
+
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            password_hash.encode("utf-8")
+        )
+
+    except Exception:
+
+        return False
 
 
 # =========================================================
@@ -238,14 +314,23 @@ def seed(db: Session):
             )
         ]
 
-        for name, email, password, role_name in users:
+        for (
+            name,
+            email,
+            password,
+            role_name
+        ) in users:
 
             db.add(
                 User(
                     name=name,
                     email=email,
-                    password_hash=pwd.hash(password),
-                    role_id=roles[role_name].id,
+                    password_hash=hash_password(
+                        password
+                    ),
+                    role_id=roles[
+                        role_name
+                    ].id,
                     active=True
                 )
             )
@@ -307,7 +392,8 @@ def token_for(user):
     payload = {
         "sub": str(user.id),
         "role": user.role.name,
-        "exp": datetime.utcnow() + timedelta(hours=8)
+        "exp": datetime.utcnow()
+        + timedelta(hours=8)
     }
 
     return jwt.encode(
@@ -418,12 +504,16 @@ def audit(
 ):
 
     # -----------------------------------------------------
-    # SAVE AUDIT LOG IN AZURE SQL
+    # AZURE SQL AUDIT LOG
     # -----------------------------------------------------
 
     db.add(
         AuditLog(
-            user_id=user.id if user else None,
+            user_id=(
+                user.id
+                if user
+                else None
+            ),
             action=action,
             entity=entity,
             entity_id=entity_id,
@@ -435,7 +525,7 @@ def audit(
 
 
     # -----------------------------------------------------
-    # SAVE EVENT IN AZURE COSMOS DB
+    # COSMOS DB EVENT
     # -----------------------------------------------------
 
     try:
@@ -464,14 +554,15 @@ def audit(
                     else None
                 ),
 
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp":
+                    datetime.utcnow().isoformat()
             }
         )
 
     except Exception as e:
 
-        # Cosmos failure should not stop the
-        # main ClaimFlow operation.
+        # Cosmos failure should not
+        # stop ClaimFlow operation.
         print(
             f"Cosmos DB event logging failed: {e}"
         )
@@ -502,7 +593,9 @@ def login(
 
     user = (
         db.query(User)
-        .filter(User.email == data.email)
+        .filter(
+            User.email == data.email
+        )
         .first()
     )
 
@@ -513,7 +606,7 @@ def login(
             detail="Invalid email or password"
         )
 
-    if not pwd.verify(
+    if not verify_password(
         data.password,
         user.password_hash
     ):
@@ -527,7 +620,6 @@ def login(
 
     return {
         "access_token": token,
-
         "token_type": "bearer",
 
         "user": {
@@ -551,7 +643,10 @@ def token_login(
 
     user = (
         db.query(User)
-        .filter(User.email == form_data.username)
+        .filter(
+            User.email ==
+            form_data.username
+        )
         .first()
     )
 
@@ -562,7 +657,7 @@ def token_login(
             detail="Invalid email or password"
         )
 
-    if not pwd.verify(
+    if not verify_password(
         form_data.password,
         user.password_hash
     ):
@@ -624,7 +719,9 @@ def claims(
 
     rows = (
         db.query(Claim)
-        .order_by(Claim.id.desc())
+        .order_by(
+            Claim.id.desc()
+        )
         .all()
     )
 
@@ -712,8 +809,11 @@ def create_claim(
     duplicate = (
         db.query(Claim)
         .filter(
-            Claim.policy_id == data.policy_id,
-            Claim.claim_type == data.claim_type
+            Claim.policy_id ==
+                data.policy_id,
+
+            Claim.claim_type ==
+                data.claim_type
         )
         .first()
     )
@@ -732,28 +832,36 @@ def create_claim(
     # -----------------------------------------------------
 
     claim = Claim(
-
         claim_number=
             "CLM-"
-            + uuid.uuid4().hex[:8].upper(),
+            + uuid.uuid4()
+            .hex[:8]
+            .upper(),
 
-        policy_id=data.policy_id,
+        policy_id=
+            data.policy_id,
 
-        claim_type=data.claim_type,
+        claim_type=
+            data.claim_type,
 
-        incident_date=data.incident_date,
+        incident_date=
+            data.incident_date,
 
-        description=data.description,
+        description=
+            data.description,
 
-        amount=data.amount,
+        amount=
+            data.amount,
 
-        created_by=user.id,
+        created_by=
+            user.id,
 
-        status="Submitted",
+        status=
+            "Submitted",
 
-        risk_flag=risk_flag
+        risk_flag=
+            risk_flag
     )
-
 
     db.add(claim)
 
@@ -773,7 +881,6 @@ def create_claim(
 
 
     return {
-
         "message":
             "Claim submitted",
 
@@ -789,7 +896,9 @@ def create_claim(
 # CHANGE CLAIM STATUS
 # =========================================================
 
-@app.patch("/api/claims/{claim_id}/status")
+@app.patch(
+    "/api/claims/{claim_id}/status"
+)
 def status(
     claim_id: int,
     data: StatusIn,
@@ -814,9 +923,7 @@ def status(
             detail="Claim not found"
         )
 
-
     new_status = data.status
-
 
     allowed_statuses = {
         "Submitted",
@@ -826,7 +933,6 @@ def status(
         "Rejected"
     }
 
-
     if new_status not in allowed_statuses:
 
         raise HTTPException(
@@ -835,28 +941,29 @@ def status(
         )
 
 
-    # =====================================================
-    # WORKFLOW VALIDATION
-    # =====================================================
-
-    # Submitted -> Under Review
+    # -----------------------------------------------------
+    # SUBMITTED -> UNDER REVIEW
+    # -----------------------------------------------------
 
     if (
         claim.status == "Submitted"
-        and new_status == "Under Review"
+        and new_status ==
+            "Under Review"
     ):
 
         claim.status = "Under Review"
 
 
     # -----------------------------------------------------
-    # Assessment must be completed before approval
+    # APPROVAL
     # -----------------------------------------------------
 
     elif new_status == "Approved":
 
         assessment = (
-            db.query(DamageAssessment)
+            db.query(
+                DamageAssessment
+            )
             .filter(
                 DamageAssessment.claim_id
                 == claim_id
@@ -872,7 +979,8 @@ def status(
                 "Claim must be assessed before approval"
             )
 
-        if claim.status != "Assessment Complete":
+        if claim.status != \
+                "Assessment Complete":
 
             raise HTTPException(
                 status_code=400,
@@ -884,7 +992,7 @@ def status(
 
 
     # -----------------------------------------------------
-    # Rejection
+    # REJECTION
     # -----------------------------------------------------
 
     elif new_status == "Rejected":
@@ -905,10 +1013,11 @@ def status(
 
 
     # -----------------------------------------------------
-    # Assessment Complete is automatic
+    # ASSESSMENT COMPLETE
     # -----------------------------------------------------
 
-    elif new_status == "Assessment Complete":
+    elif new_status == \
+            "Assessment Complete":
 
         raise HTTPException(
             status_code=400,
@@ -918,7 +1027,7 @@ def status(
 
 
     # -----------------------------------------------------
-    # Submitted cannot be restored
+    # SUBMITTED RESTORE
     # -----------------------------------------------------
 
     elif new_status == "Submitted":
@@ -965,7 +1074,9 @@ def status(
 # SURVEYOR ASSESSMENT
 # =========================================================
 
-@app.post("/api/claims/{claim_id}/assessment")
+@app.post(
+    "/api/claims/{claim_id}/assessment"
+)
 def assessment(
     claim_id: int,
     data: AssessmentIn,
@@ -992,7 +1103,7 @@ def assessment(
 
 
     # -----------------------------------------------------
-    # VALID STATUS
+    # STATUS CHECK
     # -----------------------------------------------------
 
     if claim.status not in [
@@ -1003,16 +1114,18 @@ def assessment(
         raise HTTPException(
             status_code=400,
             detail=
-            "Claim must be under review before assessment"
+            "Claim is not ready for assessment"
         )
 
 
     # -----------------------------------------------------
-    # CREATE / UPDATE ASSESSMENT
+    # CHECK EXISTING ASSESSMENT
     # -----------------------------------------------------
 
-    assessment = (
-        db.query(DamageAssessment)
+    existing = (
+        db.query(
+            DamageAssessment
+        )
         .filter(
             DamageAssessment.claim_id
             == claim_id
@@ -1020,34 +1133,43 @@ def assessment(
         .first()
     )
 
+    if existing:
 
-    if not assessment:
+        existing.surveyor_name = \
+            data.surveyor_name
 
-        assessment = DamageAssessment(
-            claim_id=claim_id
+        existing.damage_level = \
+            data.damage_level
+
+        existing.assessed_amount = \
+            data.assessed_amount
+
+        existing.remarks = \
+            data.remarks
+
+    else:
+
+        db.add(
+            DamageAssessment(
+                claim_id=claim_id,
+                surveyor_name=
+                    data.surveyor_name,
+                damage_level=
+                    data.damage_level,
+                assessed_amount=
+                    data.assessed_amount,
+                remarks=
+                    data.remarks
+            )
         )
 
-        db.add(assessment)
-
-
-    assessment.surveyor_name = \
-        data.surveyor_name
-
-    assessment.damage_level = \
-        data.damage_level
-
-    assessment.assessed_amount = \
-        data.assessed_amount
-
-    assessment.remarks = \
-        data.remarks
-
 
     # -----------------------------------------------------
-    # COMPLETE ASSESSMENT
+    # UPDATE CLAIM STATUS
     # -----------------------------------------------------
 
-    claim.status = "Assessment Complete"
+    claim.status = \
+        "Assessment Complete"
 
     db.commit()
 
@@ -1055,19 +1177,19 @@ def assessment(
     audit(
         db,
         user,
-        "ASSESS",
+        "ASSESSMENT",
         "Claim",
-        claim_id,
-        f"Damage level: {data.damage_level}"
+        claim.id,
+        "Surveyor assessment completed"
     )
 
 
     return {
         "message":
-            "Assessment completed successfully",
+            "Assessment completed",
 
         "status":
-            "Assessment Complete"
+            claim.status
     }
 
 
@@ -1075,7 +1197,9 @@ def assessment(
 # SETTLEMENT
 # =========================================================
 
-@app.post("/api/claims/{claim_id}/settlement")
+@app.post(
+    "/api/claims/{claim_id}/settlement"
+)
 def settlement(
     claim_id: int,
     data: SettlementIn,
@@ -1101,12 +1225,27 @@ def settlement(
         )
 
 
-    # =====================================================
-    # ASSESSMENT REQUIRED
-    # =====================================================
+    # -----------------------------------------------------
+    # APPROVED CHECK
+    # -----------------------------------------------------
 
-    assessment = (
-        db.query(DamageAssessment)
+    if claim.status != "Approved":
+
+        raise HTTPException(
+            status_code=400,
+            detail=
+            "Only approved claims can be settled"
+        )
+
+
+    # -----------------------------------------------------
+    # ASSESSMENT CHECK
+    # -----------------------------------------------------
+
+    assessment_record = (
+        db.query(
+            DamageAssessment
+        )
         .filter(
             DamageAssessment.claim_id
             == claim_id
@@ -1114,35 +1253,23 @@ def settlement(
         .first()
     )
 
-
-    if not assessment:
-
-        raise HTTPException(
-            status_code=400,
-            detail=
-            "Claim must be assessed before settlement"
-        )
-
-
-    # =====================================================
-    # APPROVAL REQUIRED
-    # =====================================================
-
-    if claim.status != "Approved":
+    if not assessment_record:
 
         raise HTTPException(
             status_code=400,
             detail=
-            "Claim must be approved before settlement"
+            "Damage assessment is required before settlement"
         )
 
 
-    # =====================================================
-    # CREATE / UPDATE SETTLEMENT
-    # =====================================================
+    # -----------------------------------------------------
+    # EXISTING SETTLEMENT
+    # -----------------------------------------------------
 
-    settlement_record = (
-        db.query(Settlement)
+    existing = (
+        db.query(
+            Settlement
+        )
         .filter(
             Settlement.claim_id
             == claim_id
@@ -1150,35 +1277,44 @@ def settlement(
         .first()
     )
 
+    if existing:
 
-    if not settlement_record:
+        existing.approved_amount = \
+            data.approved_amount
 
-        settlement_record = Settlement(
-            claim_id=claim_id,
-            processed_by=user.id
-        )
+        existing.payment_status = \
+            "Processed"
+
+        existing.processed_by = \
+            user.id
+
+        existing.processed_at = \
+            datetime.utcnow()
+
+    else:
 
         db.add(
-            settlement_record
+            Settlement(
+                claim_id=claim_id,
+
+                approved_amount=
+                    data.approved_amount,
+
+                payment_status=
+                    "Processed",
+
+                processed_by=
+                    user.id,
+
+                processed_at=
+                    datetime.utcnow()
+            )
         )
 
 
-    settlement_record.approved_amount = \
-        data.approved_amount
-
-    settlement_record.payment_status = \
-        "Processed"
-
-    settlement_record.processed_by = \
-        user.id
-
-    settlement_record.processed_at = \
-        datetime.utcnow()
-
-
-    # =====================================================
-    # FINAL STATUS
-    # =====================================================
+    # -----------------------------------------------------
+    # UPDATE CLAIM
+    # -----------------------------------------------------
 
     claim.status = "Settled"
 
@@ -1190,17 +1326,17 @@ def settlement(
         user,
         "SETTLEMENT",
         "Claim",
-        claim_id,
-        f"Settlement amount: {data.approved_amount}"
+        claim.id,
+        "Claim settlement processed"
     )
 
 
     return {
         "message":
-            "Settlement processed successfully",
+            "Claim settled successfully",
 
         "status":
-            "Settled",
+            claim.status,
 
         "approved_amount":
             data.approved_amount
@@ -1211,8 +1347,10 @@ def settlement(
 # DOCUMENT UPLOAD
 # =========================================================
 
-@app.post("/api/claims/{claim_id}/documents")
-def upload(
+@app.post(
+    "/api/claims/{claim_id}/documents"
+)
+def upload_document(
     claim_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -1232,58 +1370,77 @@ def upload(
         )
 
 
+    # -----------------------------------------------------
+    # SAFE FILE NAME
+    # -----------------------------------------------------
+
     original_name = (
         file.filename
-        or "file"
+        or "document"
     )
 
+    extension = (
+        Path(original_name)
+        .suffix
+    )
 
     safe_name = (
-        f"{claim_id}_"
-        f"{uuid.uuid4().hex}_"
-        f"{Path(original_name).name}"
-    )
-
-
-    file_path = (
-        UPLOADS
-        / safe_name
+        f"claim_{claim_id}_"
+        f"{uuid.uuid4().hex}"
+        f"{extension}"
     )
 
 
     # -----------------------------------------------------
-    # SAVE LOCAL COPY
+    # LOCAL FILE
     # -----------------------------------------------------
 
-    with open(
-        file_path,
+    local_path = (
+        UPLOADS / safe_name
+    )
+
+    with local_path.open(
         "wb"
-    ) as output:
+    ) as buffer:
 
         shutil.copyfileobj(
             file.file,
-            output
+            buffer
         )
 
 
     # -----------------------------------------------------
-    # UPLOAD TO AZURE BLOB STORAGE
+    # AZURE BLOB
     # -----------------------------------------------------
 
     try:
 
-        with file_path.open("rb") as blob_file:
+        blob_client = (
+            blob_container_client
+            .get_blob_client(
+                safe_name
+            )
+        )
 
-            blob_container_client.upload_blob(
-                name=safe_name,
-                data=blob_file,
+        with local_path.open(
+            "rb"
+        ) as data:
+
+            blob_client.upload_blob(
+                data,
                 overwrite=True
             )
 
     except Exception as e:
 
         print(
-            f"Azure Blob upload failed: {e}"
+            f"Blob upload failed: {e}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=
+            "Document could not be uploaded to Azure Blob Storage"
         )
 
 
@@ -1296,8 +1453,8 @@ def upload(
         user,
         "UPLOAD_DOCUMENT",
         "Claim",
-        claim_id,
-        safe_name
+        claim.id,
+        f"Document uploaded: {original_name}"
     )
 
 
@@ -1305,8 +1462,17 @@ def upload(
         "message":
             "Document uploaded successfully",
 
-        "file":
-            f"/uploads/{safe_name}"
+        "claim_id":
+            claim.id,
+
+        "filename":
+            original_name,
+
+        "stored_filename":
+            safe_name,
+
+        "blob_container":
+            storage_container_name
     }
 
 
@@ -1320,18 +1486,13 @@ def dashboard(
     user=Depends(me)
 ):
 
-    total = (
-        db.query(
-            func.count(Claim.id)
-        )
-        .scalar()
+    total_claims = (
+        db.query(Claim)
+        .count()
     )
 
-
-    pending = (
-        db.query(
-            func.count(Claim.id)
-        )
+    pending_claims = (
+        db.query(Claim)
         .filter(
             Claim.status.in_(
                 [
@@ -1341,49 +1502,62 @@ def dashboard(
                 ]
             )
         )
-        .scalar()
+        .count()
     )
 
-
-    flagged = (
-        db.query(
-            func.count(Claim.id)
-        )
+    flagged_claims = (
+        db.query(Claim)
         .filter(
             Claim.risk_flag != "Clear"
         )
-        .scalar()
+        .count()
     )
 
-
-    settled = (
-        db.query(
-            func.count(Claim.id)
+    approved_claims = (
+        db.query(Claim)
+        .filter(
+            Claim.status == "Approved"
         )
+        .count()
+    )
+
+    settled_claims = (
+        db.query(Claim)
         .filter(
             Claim.status == "Settled"
         )
-        .scalar()
+        .count()
     )
 
-
-    approved = (
+    total_amount = (
         db.query(
-            func.count(Claim.id)
-        )
-        .filter(
-            Claim.status == "Approved"
+            func.coalesce(
+                func.sum(Claim.amount),
+                0
+            )
         )
         .scalar()
     )
 
 
     return {
-        "total": total,
-        "pending": pending,
-        "flagged": flagged,
-        "approved": approved,
-        "settled": settled
+        "total_claims":
+            total_claims,
+
+        "pending_claims":
+            pending_claims,
+
+        "flagged_claims":
+            flagged_claims,
+
+        "approved_claims":
+            approved_claims,
+
+        "settled_claims":
+            settled_claims,
+
+        "total_claim_amount":
+            float(total_amount or 0)
     }
 
 
@@ -1392,7 +1566,7 @@ def dashboard(
 # =========================================================
 
 @app.get("/api/audit-logs")
-def logs(
+def audit_logs(
     db: Session = Depends(get_db),
     user=Depends(
         require(
@@ -1402,11 +1576,42 @@ def logs(
     )
 ):
 
-    return (
+    logs = (
         db.query(AuditLog)
         .order_by(
             AuditLog.id.desc()
         )
-        .limit(100)
+        .limit(200)
         .all()
     )
+
+    result = []
+
+    for log in logs:
+
+        result.append(
+            {
+                "id":
+                    log.id,
+
+                "user_id":
+                    log.user_id,
+
+                "action":
+                    log.action,
+
+                "entity":
+                    log.entity,
+
+                "entity_id":
+                    log.entity_id,
+
+                "details":
+                    log.details,
+
+                "created_at":
+                    log.created_at.isoformat()
+            }
+        )
+
+    return result
