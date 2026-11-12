@@ -1,109 +1,350 @@
+/* =========================================================
+   CLAIMFLOW - PROFESSIONAL UI / UX
+   ========================================================= */
+
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
   background: #f4f7fb;
-  color: #182230;
+  color: #172033;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* LOGIN */
 
-.center {
+/* =========================================================
+   LOGIN / REGISTER
+   ========================================================= */
+
+#login {
   min-height: 100vh;
+
   display: grid;
   place-items: center;
-  padding: 20px;
+
+  padding: 25px;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      #dbeafe 0,
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      #e0e7ff 0,
+      transparent 32%
+    ),
+    #f4f7fb;
 }
 
-.card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 8px 25px #0000000d;
-}
 
-.login {
-  width: min(390px, 92vw);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Main login card */
+
+.login-card {
+  width: min(430px, 94vw);
+
+  background: #ffffff;
+
+  border: 1px solid #e5eaf2;
+
+  border-radius: 20px;
+
+  padding: 40px 36px;
+
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.10);
+
   text-align: center;
 }
 
-.login h1 {
-  margin-bottom: 0;
-  font-size: 32px;
+
+/* Logo */
+
+.login-card h1 {
+  margin: 0;
+
+  font-size: 36px;
+
+  font-weight: 800;
+
+  letter-spacing: -1px;
+
+  color: #102a56;
 }
 
-.login p {
+
+/* Subtitle */
+
+.login-card .subtitle {
+  margin: 9px 0 30px;
+
   color: #64748b;
-  margin-top: 0;
-}
 
-.login small {
-  color: #64748b;
-  font-size: 12px;
-}
-
-#loginMsg {
-  color: #b91c1c;
   font-size: 14px;
-  min-height: 18px;
+
+  line-height: 1.6;
 }
 
 
-/* INPUTS */
+/* Register heading */
 
-input,
-select,
-textarea {
+.login-card h2 {
+  margin: 0 0 22px;
+
+  color: #172033;
+
+  font-size: 25px;
+
+  font-weight: 750;
+}
+
+
+/* =========================================================
+   LOGIN INPUTS
+   ========================================================= */
+
+#loginForm input,
+#registerForm input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  color: #182230;
-}
 
-input:focus,
-select:focus,
-textarea:focus {
+  height: 50px;
+
+  padding: 0 15px;
+
+  margin-bottom: 12px;
+
+  border: 1px solid #d8e0ec;
+
+  border-radius: 10px;
+
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px #2563eb1a;
-}
 
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
+  background: #f8fafc;
 
+  color: #172033;
 
-/* BUTTONS */
-
-button {
-  border: 0;
-  border-radius: 8px;
-  padding: 11px 15px;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-weight: 600;
   font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+#loginForm input::placeholder,
+#registerForm input::placeholder {
+  color: #94a3b8;
+}
+
+#loginForm input:focus,
+#registerForm input:focus {
+  background: #ffffff;
+
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.10);
+}
+
+
+/* =========================================================
+   PRIMARY BUTTONS
+   ========================================================= */
+
+#loginForm > button,
+#registerForm > button {
+  min-height: 45px;
+
+  padding: 0 24px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #2563eb;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+#loginForm > button:hover,
+#registerForm > button:hover {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 22px rgba(37, 99, 235, 0.25);
+}
+
+#loginForm > button:active,
+#registerForm > button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   DEMO TEXT
+   ========================================================= */
+
+.demo {
+  display: block;
+
+  margin: 10px 0 20px;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   REGISTER / LOGIN SWITCH
+   ========================================================= */
+
+.register-link {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  margin-top: 6px;
+}
+
+.register-link button {
+  min-height: 38px;
+
+  padding: 0 16px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
   transition: 0.2s;
 }
 
+.register-link button:hover {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   LOGIN / REGISTER MESSAGES
+   ========================================================= */
+
+.message {
+  min-height: 20px;
+
+  margin-top: 16px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  line-height: 1.5;
+}
+
+#loginMsg {
+  color: #dc2626;
+}
+
+#registerMsg {
+  color: #dc2626;
+}
+
+
+/* =========================================================
+   ALL GENERAL BUTTONS
+   ========================================================= */
+
+button {
+  border: 0;
+
+  border-radius: 8px;
+
+  padding: 11px 15px;
+
+  background: #2563eb;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  font-size: 14px;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
 button:hover {
-  opacity: 0.9;
+  background: #1d4ed8;
+
   transform: translateY(-1px);
 }
 
@@ -112,215 +353,612 @@ button:active {
 }
 
 
-/* MAIN APP */
+/* =========================================================
+   MAIN APPLICATION
+   ========================================================= */
 
 #app {
   display: flex;
+
   min-height: 100vh;
+
+  background: #f4f7fb;
 }
 
 
-/* SIDEBAR */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
 aside {
-  width: 230px;
-  background: #0f172a;
-  color: white;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  width: 250px;
+
   min-height: 100vh;
+
+  padding: 27px 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #0f172a 0%,
+      #111c34 100%
+    );
+
+  color: white;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+
+  position: fixed;
+
+  left: 0;
+
+  top: 0;
+
+  bottom: 0;
+
+  z-index: 10;
 }
+
+
+/* Brand */
 
 aside h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 25px;
+  margin: 0;
+
+  padding: 0 10px 22px;
+
+  font-size: 26px;
+
+  font-weight: 800;
+
+  letter-spacing: -0.5px;
+
+  border-bottom: 1px solid rgba(255,255,255,0.10);
 }
 
+
+/* User information */
+
+#userBox {
+  font-size: 12px;
+
+  color: #cbd5e1;
+
+  line-height: 1.6;
+
+  padding: 0 10px 20px;
+
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+
+  margin-bottom: 10px;
+}
+
+
+/* Sidebar buttons */
+
 aside button {
-  background: #1e293b;
+  width: 100%;
+
+  min-height: 45px;
+
+  padding: 0 14px;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #cbd5e1;
+
   text-align: left;
+
+  font-size: 13px;
+
+  font-weight: 650;
+
   border: 1px solid transparent;
 }
 
 aside button:hover {
-  background: #334155;
+  background: rgba(255,255,255,0.08);
+
+  color: #ffffff;
+
   transform: none;
+
+  box-shadow: none;
 }
 
-aside .logout {
+
+/* Dashboard button */
+
+aside button:first-of-type {
+  background: rgba(59,130,246,0.16);
+
+  color: #ffffff;
+}
+
+
+/* Logout */
+
+aside button:last-child {
   margin-top: auto;
-  background: #b91c1c;
+
+  color: #fca5a5;
+
+  background: rgba(239,68,68,0.07);
 }
 
-aside .logout:hover {
-  background: #dc2626;
-}
+aside button:last-child:hover {
+  background: rgba(239,68,68,0.15);
 
-#userBox {
-  font-size: 13px;
-  color: #cbd5e1;
-  padding: 10px 0 15px;
-  border-bottom: 1px solid #334155;
-  margin-bottom: 8px;
+  color: #fecaca;
 }
 
 
-/* MAIN CONTENT */
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
 
 main {
   flex: 1;
-  padding: 35px;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
+
+  width: calc(100% - 250px);
+
+  margin-left: 250px;
+
+  padding: 42px 38px 60px;
+
+  max-width: 1600px;
 }
 
+
+/* Main headings */
+
 main h1 {
+  margin: 0 0 28px;
+
+  color: #172033;
+
   font-size: 34px;
-  margin-top: 0;
-  margin-bottom: 20px;
+
+  font-weight: 800;
+
+  letter-spacing: -0.7px;
 }
 
 main h2 {
-  color: #182230;
+  color: #172033;
 }
 
 
-/* DASHBOARD STATS */
+/* =========================================================
+   DASHBOARD STATS
+   ========================================================= */
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin: 20px 0;
-}
 
-.stats div {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  color: #64748b;
-  min-height: 105px;
-}
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
 
-.stats strong {
-  display: block;
-  font-size: 30px;
-  color: #0f172a;
-  margin-top: 8px;
+  gap: 18px;
+
+  margin: 0 0 28px;
 }
 
 
-/* WORKFLOW CARD */
+/* Stat card */
 
-#dashboard .card {
-  margin-top: 20px;
+.stats > div {
+  position: relative;
+
+  min-height: 150px;
+
+  padding: 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5eaf2;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 8px 30px rgba(15, 23, 42, 0.05);
+
+  overflow: hidden;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-#dashboard .card p {
-  color: #475569;
-  font-size: 15px;
-  line-height: 1.7;
-}
 
+/* Top accent */
 
-/* FORM */
+.stats > div::before {
+  content: "";
 
-.form {
-  max-width: 650px;
-  display: grid;
-  gap: 14px;
-}
+  position: absolute;
 
-.form button {
+  top: 0;
+
+  left: 0;
+
   width: 100%;
+
+  height: 4px;
+
+  background: #2563eb;
 }
 
-#submitMsg {
+
+/* Hover */
+
+.stats > div:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.08);
+}
+
+
+/* Stat heading */
+
+.stats > div h3 {
+  margin: 0;
+
+  color: #64748b;
+
   font-size: 14px;
-  color: #166534;
-  min-height: 20px;
+
+  font-weight: 700;
 }
 
 
-/* TABLE */
+/* Number */
+
+.stats > div .stat-number {
+  display: block;
+
+  margin-top: 18px;
+
+  color: #0f172a;
+
+  font-size: 36px;
+
+  font-weight: 800;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   GENERAL CARD
+   ========================================================= */
 
 .card {
+  background: #ffffff;
+
+  border: 1px solid #e5eaf2;
+
+  border-radius: 16px;
+
+  padding: 25px;
+
+  box-shadow:
+    0 8px 30px rgba(15, 23, 42, 0.05);
+
   overflow-x: auto;
+}
+
+
+/* =========================================================
+   FORM CARD
+   ========================================================= */
+
+.form-card {
+  max-width: 760px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5eaf2;
+
+  border-radius: 16px;
+
+  padding: 30px;
+
+  box-shadow:
+    0 8px 30px rgba(15, 23, 42, 0.05);
+}
+
+
+/* Labels */
+
+.form-card label {
+  display: block;
+
+  margin: 18px 0 7px;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.form-card label:first-child {
+  margin-top: 0;
+}
+
+
+/* =========================================================
+   GENERAL INPUTS
+   ========================================================= */
+
+input,
+select,
+textarea {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  border: 1px solid #d8e0ec;
+
+  border-radius: 9px;
+
+  font-size: 14px;
+
+  background: #f8fafc;
+
+  color: #172033;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background: #ffffff;
+
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,0.10);
+}
+
+textarea {
+  min-height: 120px;
+
+  resize: vertical;
+}
+
+
+/* =========================================================
+   SUBMIT CLAIM BUTTON
+   ========================================================= */
+
+.form-card > button {
+  margin-top: 24px;
+
+  min-height: 45px;
+
+  padding: 0 22px;
+
+  border-radius: 8px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-weight: 750;
+}
+
+.form-card > button:hover {
+  background: #1d4ed8;
+
+  box-shadow:
+    0 8px 20px rgba(37,99,235,0.20);
+}
+
+
+/* Submit message */
+
+#submitMsg {
+  min-height: 20px;
+
+  margin-top: 16px;
+
+  color: #166534;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-container {
+  width: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #e5eaf2;
+
+  border-radius: 16px;
+
+  overflow-x: auto;
+
+  box-shadow:
+    0 8px 30px rgba(15, 23, 42, 0.05);
 }
 
 table {
   width: 100%;
+
+  min-width: 850px;
+
   border-collapse: collapse;
-  min-width: 750px;
 }
 
 th,
 td {
-  padding: 13px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 18px;
+
+  border-bottom: 1px solid #edf1f6;
+
   text-align: left;
-  font-size: 14px;
+
+  font-size: 13px;
+
   white-space: nowrap;
 }
 
 th {
-  color: #334155;
   background: #f8fafc;
-  font-weight: 700;
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.4px;
 }
 
 td {
   color: #475569;
 }
 
-tr:hover td {
+tbody tr:hover td {
   background: #f8fafc;
 }
 
+tbody tr:last-child td {
+  border-bottom: none;
+}
 
-/* CLAIM STATUS */
+
+/* =========================================================
+   TABLE BUTTONS
+   ========================================================= */
+
+td button {
+  padding: 8px 13px;
+
+  border-radius: 7px;
+
+  background: #2563eb;
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+td button:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================================
+   STATUS / RISK BADGES
+   ========================================================= */
 
 .badge {
-  display: inline-block;
-  padding: 5px 9px;
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 6px 10px;
+
   border-radius: 999px;
+
   background: #e2e8f0;
-  font-size: 12px;
-  font-weight: 600;
+
+  color: #475569;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
 }
+
+
+/* Risk */
 
 .risk {
   background: #fee2e2;
+
   color: #991b1b;
 }
 
+
+/* Clear */
+
 .clear {
   background: #dcfce7;
+
   color: #166534;
 }
 
 
-/* STATUS SELECT */
+/* =========================================================
+   SELECT INSIDE TABLE
+   ========================================================= */
 
 td select {
-  min-width: 130px;
-  padding: 8px;
-  font-size: 13px;
+  min-width: 135px;
+
+  padding: 8px 10px;
+
+  background: #ffffff;
+
+  font-size: 12px;
 }
 
 
-/* RESPONSIVE */
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
+
   .stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
   }
+
+  main {
+    padding: 32px 25px 50px;
+  }
+
 }
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
 
 @media (max-width: 800px) {
 
@@ -329,17 +967,47 @@ td select {
   }
 
   aside {
+    position: relative;
+
     width: 100%;
+
     min-height: auto;
+
+    padding: 20px 16px;
   }
 
-  aside .logout {
-    margin-top: 10px;
+  aside h2 {
+    padding-bottom: 16px;
+  }
+
+  #userBox {
+    padding-bottom: 14px;
+
+    margin-bottom: 10px;
+  }
+
+  aside button {
+    display: inline-block;
+
+    width: auto;
+
+    min-width: 105px;
+
+    margin-right: 5px;
+
+    margin-bottom: 5px;
+  }
+
+  aside button:last-child {
+    margin-top: 5px;
   }
 
   main {
-    padding: 20px;
-    overflow: auto;
+    width: 100%;
+
+    margin-left: 0;
+
+    padding: 28px 18px 45px;
   }
 
   main h1 {
@@ -347,29 +1015,83 @@ td select {
   }
 
   .stats {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
   }
 
   table {
-    min-width: 800px;
+    min-width: 850px;
   }
+
 }
 
-@media (max-width: 500px) {
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+
+  #login {
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+
+    padding: 30px 21px;
+
+    border-radius: 16px;
+  }
+
+  .login-card h1 {
+    font-size: 30px;
+  }
+
+  .login-card .subtitle {
+    font-size: 13px;
+
+    margin-bottom: 24px;
+  }
 
   .stats {
     grid-template-columns: 1fr;
   }
 
-  main {
-    padding: 15px;
+  .stats > div {
+    min-height: 125px;
   }
 
-  .login {
-    width: 100%;
+  main {
+    padding: 22px 14px 40px;
+  }
+
+  main h1 {
+    font-size: 25px;
+
+    margin-bottom: 20px;
+  }
+
+  .form-card {
+    padding: 21px 17px;
   }
 
   .card {
-    padding: 16px;
+    padding: 17px;
   }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.20);
+
+  outline-offset: 2px;
 }
