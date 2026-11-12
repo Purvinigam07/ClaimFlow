@@ -15,7 +15,7 @@ async function req(path, opt = {}) {
         } : {})
     };
 
-  let r = await fetch(API + path, opt);
+    let r = await fetch(API + path, opt);
 
     let d = await r.json().catch(() => ({
         detail: "Server error"
@@ -70,6 +70,129 @@ async function login() {
 }
 
 
+// ================= REGISTRATION =================
+
+function showRegister() {
+
+    document.getElementById("loginForm")
+        .classList.add("hidden");
+
+    document.getElementById("registerForm")
+        .classList.remove("hidden");
+
+    document.getElementById("loginMsg").textContent = "";
+}
+
+
+function showLogin() {
+
+    document.getElementById("registerForm")
+        .classList.add("hidden");
+
+    document.getElementById("loginForm")
+        .classList.remove("hidden");
+
+    document.getElementById("registerMsg").textContent = "";
+}
+
+
+async function registerUser() {
+
+    const name =
+        document.getElementById("registerName")
+            .value.trim();
+
+    const email =
+        document.getElementById("registerEmail")
+            .value.trim();
+
+    const password =
+        document.getElementById("registerPassword")
+            .value;
+
+    const msg =
+        document.getElementById("registerMsg");
+
+
+    if (!name || !email || !password) {
+
+        msg.textContent =
+            "Please fill all fields.";
+
+        return;
+    }
+
+
+    if (password.length < 6) {
+
+        msg.textContent =
+            "Password must be at least 6 characters.";
+
+        return;
+    }
+
+
+    try {
+
+        let d = await req(
+            "/auth/register",
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    name: name,
+                    email: email,
+                    password: password
+
+                })
+
+            }
+        );
+
+
+        msg.textContent =
+            d.message + " You can now login.";
+
+
+        document.getElementById(
+            "registerName"
+        ).value = "";
+
+        document.getElementById(
+            "registerEmail"
+        ).value = "";
+
+        document.getElementById(
+            "registerPassword"
+        ).value = "";
+
+
+        setTimeout(() => {
+
+            showLogin();
+
+            document.getElementById(
+                "email"
+            ).value = email;
+
+        }, 1000);
+
+
+    } catch (e) {
+
+        msg.textContent =
+            e.message;
+
+    }
+}
+
+
 // ================= OPEN APP =================
 
 async function openApp() {
@@ -80,24 +203,34 @@ async function openApp() {
     document.getElementById("app")
         .classList.remove("hidden");
 
+
     try {
 
         let u = await req("/me");
 
         current = u;
 
-        document.getElementById("userBox").textContent =
+
+        document.getElementById(
+            "userBox"
+        ).textContent =
             `${u.name} • ${u.role}`;
 
+
         await loadDashboard();
+
         await loadPolicies();
+
         await loadClaims();
 
         updateMenuByRole();
 
+
     } catch (e) {
 
-        localStorage.removeItem("claimflow_token");
+        localStorage.removeItem(
+            "claimflow_token"
+        );
 
         location.reload();
 
@@ -111,39 +244,62 @@ function updateMenuByRole() {
 
     const role = current?.role;
 
+
     const submitBtn =
-        document.querySelector('aside button[onclick="show(\'submit\')"]');
+        document.querySelector(
+            'aside button[onclick="show(\'submit\')"]'
+        );
+
 
     const auditBtn =
-        document.querySelector('aside button[onclick="show(\'audit\')"]');
+        document.querySelector(
+            'aside button[onclick="show(\'audit\')"]'
+        );
+
 
     // Policyholder can submit
+
     if (submitBtn) {
 
         if (
             role === "Policyholder" ||
             role === "Admin"
         ) {
-            submitBtn.style.display = "block";
+
+            submitBtn.style.display =
+                "block";
+
         } else {
-            submitBtn.style.display = "none";
+
+            submitBtn.style.display =
+                "none";
+
         }
 
     }
 
+
     // Only Admin and Auditor can view audit logs
+
     if (auditBtn) {
 
         if (
             role === "Admin" ||
             role === "Auditor"
         ) {
-            auditBtn.style.display = "block";
+
+            auditBtn.style.display =
+                "block";
+
         } else {
-            auditBtn.style.display = "none";
+
+            auditBtn.style.display =
+                "none";
+
         }
 
     }
+
 }
 
 
@@ -158,33 +314,49 @@ function show(id) {
         "audit"
     ].forEach(x => {
 
-        let el = document.getElementById(x);
+        let el =
+            document.getElementById(x);
 
         if (el) {
+
             el.classList.add("hidden");
+
         }
 
     });
 
+
     let target =
         document.getElementById(id);
 
+
     if (target) {
+
         target.classList.remove("hidden");
+
     }
 
 
     if (id === "dashboard") {
+
         loadDashboard();
+
     }
+
 
     if (id === "claims") {
+
         loadClaims();
+
     }
 
+
     if (id === "audit") {
+
         loadAudit();
+
     }
+
 }
 
 
@@ -194,19 +366,33 @@ async function loadDashboard() {
 
     try {
 
-        let d = await req("/dashboard");
+        let d =
+            await req("/dashboard");
 
-        document.getElementById("total").textContent =
-            d.total;
 
-        document.getElementById("pending").textContent =
-            d.pending;
+        document.getElementById(
+            "total"
+        ).textContent =
+            d.total_claims;
 
-        document.getElementById("flagged").textContent =
-            d.flagged;
 
-        document.getElementById("settled").textContent =
-            d.settled;
+        document.getElementById(
+            "pending"
+        ).textContent =
+            d.pending_claims;
+
+
+        document.getElementById(
+            "flagged"
+        ).textContent =
+            d.flagged_claims;
+
+
+        document.getElementById(
+            "settled"
+        ).textContent =
+            d.settled_claims;
+
 
     } catch (e) {
 
@@ -216,6 +402,7 @@ async function loadDashboard() {
         );
 
     }
+
 }
 
 
@@ -228,16 +415,23 @@ async function loadPolicies() {
         let ps =
             await req("/policies");
 
-        document.getElementById("policy").innerHTML =
+
+        document.getElementById(
+            "policy"
+        ).innerHTML =
+
             ps.map(p => `
 
                 <option value="${p.id}">
+
                     ${p.policy_number} -
                     ${p.customer_name}
                     (${p.coverage_type})
+
                 </option>
 
             `).join("");
+
 
     } catch (e) {
 
@@ -247,6 +441,7 @@ async function loadPolicies() {
         );
 
     }
+
 }
 
 
@@ -259,7 +454,11 @@ async function loadClaims() {
         let cs =
             await req("/claims");
 
-        document.getElementById("claimRows").innerHTML =
+
+        document.getElementById(
+            "claimRows"
+        ).innerHTML =
+
             cs.map(c => {
 
                 let riskClass =
@@ -267,7 +466,9 @@ async function loadClaims() {
                         ? "clear"
                         : "risk";
 
-                let action = getClaimAction(c);
+
+                let action =
+                    getClaimAction(c);
 
 
                 return `
@@ -278,31 +479,41 @@ async function loadClaims() {
                             ${c.claim_number}
                         </td>
 
+
                         <td>
                             ${c.policy_number}
                         </td>
+
 
                         <td>
                             ${c.claim_type}
                         </td>
 
+
                         <td>
+
                             ₹${Number(
                                 c.amount
                             ).toLocaleString()}
+
                         </td>
+
 
                         <td>
 
                             <span class="badge ${riskClass}">
+
                                 ${c.risk_flag}
+
                             </span>
 
                         </td>
 
+
                         <td>
                             ${c.status}
                         </td>
+
 
                         <td>
                             ${action}
@@ -314,6 +525,7 @@ async function loadClaims() {
 
             }).join("");
 
+
     } catch (e) {
 
         console.error(
@@ -322,6 +534,7 @@ async function loadClaims() {
         );
 
     }
+
 }
 
 
@@ -333,19 +546,25 @@ function getClaimAction(c) {
         current?.role;
 
 
-    // ADMIN
+    // ================= ADMIN =================
+
     if (role === "Admin") {
 
         if (c.status === "Approved") {
 
             return `
+
                 <button
                     onclick="settleClaim(${c.id})">
+
                     Settle
+
                 </button>
+
             `;
 
         }
+
 
         if (c.status !== "Settled") {
 
@@ -361,13 +580,16 @@ function getClaimAction(c) {
                         ${c.status}
                     </option>
 
+
                     <option value="Under Review">
                         Under Review
                     </option>
 
+
                     <option value="Approved">
                         Approved
                     </option>
+
 
                     <option value="Rejected">
                         Rejected
@@ -379,11 +601,14 @@ function getClaimAction(c) {
 
         }
 
+
         return "-";
+
     }
 
 
-    // CLAIMS OFFICER
+    // ================= CLAIMS OFFICER =================
+
     if (role === "Claims Officer") {
 
         if (
@@ -404,13 +629,16 @@ function getClaimAction(c) {
                         ${c.status}
                     </option>
 
+
                     <option value="Under Review">
                         Under Review
                     </option>
 
+
                     <option value="Approved">
                         Approved
                     </option>
+
 
                     <option value="Rejected">
                         Rejected
@@ -422,11 +650,14 @@ function getClaimAction(c) {
 
         }
 
+
         return "-";
+
     }
 
 
-    // SURVEYOR
+    // ================= SURVEYOR =================
+
     if (role === "Surveyor") {
 
         if (
@@ -438,18 +669,23 @@ function getClaimAction(c) {
 
                 <button
                     onclick="submitAssessment(${c.id})">
+
                     Assess
+
                 </button>
 
             `;
 
         }
 
+
         return "-";
+
     }
 
 
-    // FINANCE OFFICER
+    // ================= FINANCE OFFICER =================
+
     if (role === "Finance Officer") {
 
         if (c.status === "Approved") {
@@ -458,19 +694,25 @@ function getClaimAction(c) {
 
                 <button
                     onclick="settleClaim(${c.id})">
+
                     Settle
+
                 </button>
 
             `;
 
         }
 
+
         return "-";
+
     }
 
 
-    // POLICYHOLDER
+    // ================= POLICYHOLDER =================
+
     return "-";
+
 }
 
 
@@ -494,6 +736,7 @@ async function changeStatus(
                         "application/json"
                 },
 
+
                 body: JSON.stringify({
                     status: status
                 })
@@ -506,6 +749,7 @@ async function changeStatus(
 
         await loadDashboard();
 
+
     } catch (e) {
 
         alert(e.message);
@@ -513,6 +757,7 @@ async function changeStatus(
         await loadClaims();
 
     }
+
 }
 
 
@@ -534,6 +779,7 @@ async function submitClaim() {
                             "application/json"
                     },
 
+
                     body: JSON.stringify({
 
                         policy_id:
@@ -543,20 +789,24 @@ async function submitClaim() {
                                 ).value
                             ),
 
+
                         claim_type:
                             document.getElementById(
                                 "type"
                             ).value,
+
 
                         incident_date:
                             document.getElementById(
                                 "date"
                             ).value,
 
+
                         description:
                             document.getElementById(
                                 "desc"
                             ).value,
+
 
                         amount:
                             Number(
@@ -574,6 +824,7 @@ async function submitClaim() {
         document.getElementById(
             "submitMsg"
         ).textContent =
+
             `${d.message}. Risk: ${d.risk_flag}`;
 
 
@@ -581,14 +832,17 @@ async function submitClaim() {
 
         await loadClaims();
 
+
     } catch (e) {
 
         document.getElementById(
             "submitMsg"
         ).textContent =
+
             e.message;
 
     }
+
 }
 
 
@@ -603,8 +857,11 @@ async function submitAssessment(
             "Enter Surveyor Name:"
         );
 
+
     if (!surveyorName) {
+
         return;
+
     }
 
 
@@ -613,8 +870,11 @@ async function submitAssessment(
             "Damage Level (Low / Medium / High):"
         );
 
+
     if (!damageLevel) {
+
         return;
+
     }
 
 
@@ -623,8 +883,11 @@ async function submitAssessment(
             "Enter Assessed Amount:"
         );
 
+
     if (!assessedAmount) {
+
         return;
+
     }
 
 
@@ -648,18 +911,22 @@ async function submitAssessment(
                             "application/json"
                     },
 
+
                     body: JSON.stringify({
 
                         surveyor_name:
                             surveyorName,
 
+
                         damage_level:
                             damageLevel,
+
 
                         assessed_amount:
                             Number(
                                 assessedAmount
                             ),
+
 
                         remarks:
                             remarks || ""
@@ -679,11 +946,13 @@ async function submitAssessment(
 
         await loadDashboard();
 
+
     } catch (e) {
 
         alert(e.message);
 
     }
+
 }
 
 
@@ -700,7 +969,9 @@ async function settleClaim(
 
 
     if (!approvedAmount) {
+
         return;
+
     }
 
 
@@ -713,6 +984,7 @@ async function settleClaim(
         );
 
         return;
+
     }
 
 
@@ -729,6 +1001,7 @@ async function settleClaim(
                         "Content-Type":
                             "application/json"
                     },
+
 
                     body: JSON.stringify({
 
@@ -752,11 +1025,13 @@ async function settleClaim(
 
         await loadDashboard();
 
+
     } catch (e) {
 
         alert(e.message);
 
     }
+
 }
 
 
@@ -784,17 +1059,21 @@ async function loadAudit() {
                         ${x.action}
                     </td>
 
+
                     <td>
                         ${x.entity}
                     </td>
+
 
                     <td>
                         ${x.entity_id || ""}
                     </td>
 
+
                     <td>
                         ${x.details || ""}
                     </td>
+
 
                     <td>
                         ${new Date(
@@ -806,6 +1085,7 @@ async function loadAudit() {
 
             `).join("");
 
+
     } catch (e) {
 
         document.getElementById(
@@ -815,7 +1095,9 @@ async function loadAudit() {
             <tr>
 
                 <td colspan="5">
+
                     ${e.message}
+
                 </td>
 
             </tr>
@@ -823,6 +1105,7 @@ async function loadAudit() {
         `;
 
     }
+
 }
 
 
@@ -841,6 +1124,7 @@ function logout() {
     location.reload();
 
 }
+
 
 // ================= AUTO LOGIN =================
 
