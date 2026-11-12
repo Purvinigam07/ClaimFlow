@@ -1,1601 +1,528 @@
-// =====================================================
-// CLAIMFLOW - FRONTEND JAVASCRIPT
-// =====================================================
+<!DOCTYPE html>
+<html lang="en">
 
-let token = localStorage.getItem("claimflow_token");
-let current = null;
+<head>
+    <meta charset="UTF-8">
 
-const API =
-    "https://claimflow-api-2026-cfehbyftescvh3g5.koreacentral-01.azurewebsites.net/api";
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
+    <title>ClaimFlow</title>
 
-// =====================================================
-// API REQUEST
-// =====================================================
+    <link rel="stylesheet"
+        href="style.css">
+</head>
 
-async function req(path, opt = {}) {
 
-    opt.headers = {
-        ...(opt.headers || {}),
-        ...(token
-            ? {
-                Authorization: "Bearer " + token
-            }
-            : {})
-    };
+<body>
 
-    let response;
+<!-- ================================================= -->
+<!-- LOGIN PAGE -->
+<!-- ================================================= -->
 
-    try {
+<div id="login"
+     class="page">
 
-        response = await fetch(API + path, opt);
+    <div class="login-card">
 
-    } catch (error) {
+        <h1>ClaimFlow</h1>
 
-        throw new Error(
-            "Unable to connect to ClaimFlow server."
-        );
+        <p class="subtitle">
+            Insurance Claims Processing & Fraud Control
+        </p>
 
-    }
 
+        <!-- LOGIN FORM -->
 
-    let data;
+        <div id="loginForm">
 
-    try {
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+            >
 
-        data = await response.json();
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+            >
 
-    } catch (error) {
+            <button
+                type="button"
+                onclick="login()">
 
-        data = {
-            detail: "Server returned an invalid response."
-        };
+                Login
 
-    }
+            </button>
 
 
-    if (!response.ok) {
+            <span class="demo">
+                Demo: admin@claimflow.local / Admin@123
+            </span>
 
-        let message = "Request failed.";
 
-        if (typeof data.detail === "string") {
+            <div class="register-link">
 
-            message = data.detail;
-
-        } else if (Array.isArray(data.detail)) {
-
-            message = data.detail
-                .map(x => x.msg || "Validation error")
-                .join(", ");
-
-        } else if (data.detail) {
-
-            message = JSON.stringify(data.detail);
-
-        } else if (data.message) {
-
-            message = data.message;
-
-        }
-
-        throw new Error(message);
-
-    }
-
-
-    return data;
-}
-
-
-// =====================================================
-// LOGIN
-// =====================================================
-
-async function login() {
-
-    const email =
-        document.getElementById("email").value.trim();
-
-    const password =
-        document.getElementById("password").value;
-
-
-    const msg =
-        document.getElementById("loginMsg");
-
-
-    msg.textContent = "";
-
-
-    if (!email || !password) {
-
-        msg.textContent =
-            "Please enter email and password.";
-
-        return;
-
-    }
-
-
-    try {
-
-        const data = await req(
-            "/auth/login",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            }
-        );
-
-
-        token = data.access_token;
-
-        localStorage.setItem(
-            "claimflow_token",
-            token
-        );
-
-
-        current = data.user;
-
-        openApp();
-
-
-    } catch (error) {
-
-        msg.textContent =
-            error.message || "Login failed.";
-
-    }
-}
-
-
-// =====================================================
-// SHOW REGISTER FORM
-// =====================================================
-
-function showRegister() {
-
-    const loginForm =
-        document.getElementById("loginForm");
-
-    const registerForm =
-        document.getElementById("registerForm");
-
-
-    if (loginForm) {
-
-        loginForm.classList.add("hidden");
-
-    }
-
-
-    if (registerForm) {
-
-        registerForm.classList.remove("hidden");
-
-    }
-
-
-    const loginMsg =
-        document.getElementById("loginMsg");
-
-    const registerMsg =
-        document.getElementById("registerMsg");
-
-
-    if (loginMsg) {
-
-        loginMsg.textContent = "";
-
-    }
-
-
-    if (registerMsg) {
-
-        registerMsg.textContent = "";
-
-    }
-
-}
-
-
-// =====================================================
-// SHOW LOGIN FORM
-// =====================================================
-
-function showLogin() {
-
-    const loginForm =
-        document.getElementById("loginForm");
-
-    const registerForm =
-        document.getElementById("registerForm");
-
-
-    if (registerForm) {
-
-        registerForm.classList.add("hidden");
-
-    }
-
-
-    if (loginForm) {
-
-        loginForm.classList.remove("hidden");
-
-    }
-
-
-    const loginMsg =
-        document.getElementById("loginMsg");
-
-    const registerMsg =
-        document.getElementById("registerMsg");
-
-
-    if (loginMsg) {
-
-        loginMsg.textContent = "";
-
-    }
-
-
-    if (registerMsg) {
-
-        registerMsg.textContent = "";
-
-    }
-
-}
-
-
-// =====================================================
-// REGISTER USER
-// =====================================================
-
-async function registerUser() {
-
-    const nameElement =
-        document.getElementById("registerName");
-
-    const emailElement =
-        document.getElementById("registerEmail");
-
-    const passwordElement =
-        document.getElementById(
-            "registerPassword"
-        );
-
-    const msg =
-        document.getElementById(
-            "registerMsg"
-        );
-
-
-    if (!nameElement ||
-        !emailElement ||
-        !passwordElement) {
-
-        if (msg) {
-
-            msg.textContent =
-                "Registration form is not configured correctly.";
-
-        }
-
-        return;
-
-    }
-
-
-    const name =
-        nameElement.value.trim();
-
-    const email =
-        emailElement.value.trim();
-
-    const password =
-        passwordElement.value;
-
-
-    if (!name ||
-        !email ||
-        !password) {
-
-        msg.textContent =
-            "Please fill all fields.";
-
-        return;
-
-    }
-
-
-    if (password.length < 6) {
-
-        msg.textContent =
-            "Password must be at least 6 characters.";
-
-        return;
-
-    }
-
-
-    msg.textContent =
-        "Creating your account...";
-
-
-    try {
-
-        const data = await req(
-            "/auth/register",
-            {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    name: name,
-
-                    email: email,
-
-                    password: password
-
-                })
-
-            }
-        );
-
-
-        msg.textContent =
-            data.message ||
-            "Registration successful.";
-
-        msg.style.color = "green";
-
-
-        // Clear registration fields
-
-        nameElement.value = "";
-
-        emailElement.value = "";
-
-        passwordElement.value = "";
-
-
-        // Go back to login after 1 second
-
-        setTimeout(
-            function () {
-
-                showLogin();
-
-
-                const loginEmail =
-                    document.getElementById(
-                        "email"
-                    );
-
-
-                if (loginEmail) {
-
-                    loginEmail.value =
-                        email;
-
-                }
-
-            },
-            1000
-        );
-
-
-    } catch (error) {
-
-        msg.style.color = "red";
-
-        msg.textContent =
-            error.message ||
-            "Registration failed.";
-
-    }
-
-}
-
-
-// =====================================================
-// OPEN APPLICATION
-// =====================================================
-
-async function openApp() {
-
-    const loginPage =
-        document.getElementById("login");
-
-    const app =
-        document.getElementById("app");
-
-
-    if (loginPage) {
-
-        loginPage.classList.add("hidden");
-
-    }
-
-
-    if (app) {
-
-        app.classList.remove("hidden");
-
-    }
-
-
-    try {
-
-        const user =
-            await req("/me");
-
-        current = user;
-
-
-        const userBox =
-            document.getElementById(
-                "userBox"
-            );
-
-
-        if (userBox) {
-
-            userBox.textContent =
-                `${user.name} • ${user.role}`;
-
-        }
-
-
-        await loadDashboard();
-
-        await loadPolicies();
-
-        await loadClaims();
-
-        updateMenuByRole();
-
-
-    } catch (error) {
-
-        localStorage.removeItem(
-            "claimflow_token"
-        );
-
-        token = null;
-
-        current = null;
-
-        location.reload();
-
-    }
-
-}
-
-
-// =====================================================
-// ROLE BASED MENU
-// =====================================================
-
-function updateMenuByRole() {
-
-    const role =
-        current?.role;
-
-
-    const submitButton =
-        document.querySelector(
-            'aside button[onclick="show(\'submit\')"]'
-        );
-
-
-    const auditButton =
-        document.querySelector(
-            'aside button[onclick="show(\'audit\')"]'
-        );
-
-
-    // Policyholder and Admin can submit claims
-
-    if (submitButton) {
-
-        if (
-            role === "Policyholder" ||
-            role === "Admin"
-        ) {
-
-            submitButton.style.display =
-                "block";
-
-        } else {
-
-            submitButton.style.display =
-                "none";
-
-        }
-
-    }
-
-
-    // Admin and Auditor can view audit logs
-
-    if (auditButton) {
-
-        if (
-            role === "Admin" ||
-            role === "Auditor"
-        ) {
-
-            auditButton.style.display =
-                "block";
-
-        } else {
-
-            auditButton.style.display =
-                "none";
-
-        }
-
-    }
-
-}
-
-
-// =====================================================
-// NAVIGATION
-// =====================================================
-
-function show(id) {
-
-    const sections = [
-        "dashboard",
-        "claims",
-        "submit",
-        "audit"
-    ];
-
-
-    sections.forEach(function (section) {
-
-        const element =
-            document.getElementById(
-                section
-            );
-
-        if (element) {
-
-            element.classList.add(
-                "hidden"
-            );
-
-        }
-
-    });
-
-
-    const target =
-        document.getElementById(id);
-
-
-    if (target) {
-
-        target.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    if (id === "dashboard") {
-
-        loadDashboard();
-
-    }
-
-
-    if (id === "claims") {
-
-        loadClaims();
-
-    }
-
-
-    if (id === "audit") {
-
-        loadAudit();
-
-    }
-
-}
-
-
-// =====================================================
-// DASHBOARD
-// =====================================================
-
-async function loadDashboard() {
-
-    try {
-
-        const data =
-            await req("/dashboard");
-
-
-        const total =
-            document.getElementById(
-                "total"
-            );
-
-        const pending =
-            document.getElementById(
-                "pending"
-            );
-
-        const flagged =
-            document.getElementById(
-                "flagged"
-            );
-
-        const settled =
-            document.getElementById(
-                "settled"
-            );
-
-
-        if (total) {
-
-            total.textContent =
-                data.total_claims;
-
-        }
-
-
-        if (pending) {
-
-            pending.textContent =
-                data.pending_claims;
-
-        }
-
-
-        if (flagged) {
-
-            flagged.textContent =
-                data.flagged_claims;
-
-        }
-
-
-        if (settled) {
-
-            settled.textContent =
-                data.settled_claims;
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Dashboard error:",
-            error
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// LOAD POLICIES
-// =====================================================
-
-async function loadPolicies() {
-
-    try {
-
-        const policies =
-            await req("/policies");
-
-
-        const policySelect =
-            document.getElementById(
-                "policy"
-            );
-
-
-        if (!policySelect) {
-
-            return;
-
-        }
-
-
-        policySelect.innerHTML =
-            policies.map(function (policy) {
-
-                return `
-
-                    <option value="${policy.id}">
-
-                        ${policy.policy_number}
-                        -
-                        ${policy.customer_name}
-                        (${policy.coverage_type})
-
-                    </option>
-
-                `;
-
-            }).join("");
-
-
-    } catch (error) {
-
-        console.error(
-            "Policy loading error:",
-            error
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// LOAD CLAIMS
-// =====================================================
-
-async function loadClaims() {
-
-    try {
-
-        const claims =
-            await req("/claims");
-
-
-        const rows =
-            document.getElementById(
-                "claimRows"
-            );
-
-
-        if (!rows) {
-
-            return;
-
-        }
-
-
-        rows.innerHTML =
-            claims.map(function (claim) {
-
-                const riskClass =
-                    claim.risk_flag === "Clear"
-                        ? "clear"
-                        : "risk";
-
-
-                const action =
-                    getClaimAction(
-                        claim
-                    );
-
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            ${claim.claim_number}
-                        </td>
-
-                        <td>
-                            ${claim.policy_number}
-                        </td>
-
-                        <td>
-                            ${claim.claim_type}
-                        </td>
-
-                        <td>
-                            ₹${Number(
-                                claim.amount
-                            ).toLocaleString()}
-                        </td>
-
-                        <td>
-
-                            <span
-                                class="badge ${riskClass}"
-                            >
-
-                                ${claim.risk_flag}
-
-                            </span>
-
-                        </td>
-
-                        <td>
-                            ${claim.status}
-                        </td>
-
-                        <td>
-                            ${action}
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-
-    } catch (error) {
-
-        console.error(
-            "Claims loading error:",
-            error
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// CLAIM ACTIONS
-// =====================================================
-
-function getClaimAction(claim) {
-
-    const role =
-        current?.role;
-
-
-    // -------------------------------------------------
-    // ADMIN
-    // -------------------------------------------------
-
-    if (role === "Admin") {
-
-        if (
-            claim.status === "Approved"
-        ) {
-
-            return `
+                New user?
 
                 <button
                     type="button"
-                    onclick="settleClaim(${claim.id})">
+                    onclick="showRegister()">
 
-                    Settle
+                    Register
 
                 </button>
 
-            `;
-
-        }
+            </div>
 
 
-        if (
-            claim.status !== "Settled"
-        ) {
+            <div
+                id="loginMsg"
+                class="message">
+            </div>
 
-            return `
+        </div>
 
-                <select
-                    onchange="changeStatus(
-                        ${claim.id},
-                        this.value
-                    )">
 
-                    <option
-                        value="${claim.status}"
-                    >
+        <!-- REGISTER FORM -->
 
-                        ${claim.status}
+        <div
+            id="registerForm"
+            class="hidden">
 
-                    </option>
+            <h2>Create Account</h2>
 
-                    <option value="Under Review">
-                        Under Review
-                    </option>
 
-                    <option value="Approved">
-                        Approved
-                    </option>
+            <input
+                type="text"
+                id="registerName"
+                placeholder="Full Name"
+            >
 
-                    <option value="Rejected">
-                        Rejected
-                    </option>
+
+            <input
+                type="email"
+                id="registerEmail"
+                placeholder="Email"
+            >
+
+
+            <input
+                type="password"
+                id="registerPassword"
+                placeholder="Password"
+            >
+
+
+            <button
+                type="button"
+                onclick="registerUser()">
+
+                Register
+
+            </button>
+
+
+            <div class="register-link">
+
+                Already have an account?
+
+                <button
+                    type="button"
+                    onclick="showLogin()">
+
+                    Login
+
+                </button>
+
+            </div>
+
+
+            <p class="demo">
+                New accounts are registered as Policyholder
+            </p>
+
+
+            <div
+                id="registerMsg"
+                class="message">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ================================================= -->
+<!-- MAIN APPLICATION -->
+<!-- ================================================= -->
+
+<div id="app"
+     class="hidden">
+
+
+    <!-- SIDEBAR -->
+
+    <aside>
+
+        <h2>ClaimFlow</h2>
+
+        <div id="userBox"
+             class="user-box">
+        </div>
+
+
+        <button
+            type="button"
+            onclick="show('dashboard')">
+
+            Dashboard
+
+        </button>
+
+
+        <button
+            type="button"
+            onclick="show('claims')">
+
+            Claims
+
+        </button>
+
+
+        <button
+            type="button"
+            onclick="show('submit')">
+
+            Submit Claim
+
+        </button>
+
+
+        <button
+            type="button"
+            onclick="show('audit')">
+
+            Audit Logs
+
+        </button>
+
+
+        <button
+            type="button"
+            onclick="logout()">
+
+            Logout
+
+        </button>
+
+    </aside>
+
+
+
+    <!-- MAIN CONTENT -->
+
+    <main>
+
+
+        <!-- ========================================= -->
+        <!-- DASHBOARD -->
+        <!-- ========================================= -->
+
+        <section id="dashboard">
+
+            <h1>Dashboard</h1>
+
+
+            <div class="stats">
+
+
+                <div class="stat-card">
+
+                    <h3>Total Claims</h3>
+
+                    <div
+                        id="total"
+                        class="stat-number">
+
+                        0
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <h3>Pending Claims</h3>
+
+                    <div
+                        id="pending"
+                        class="stat-number">
+
+                        0
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <h3>Flagged Claims</h3>
+
+                    <div
+                        id="flagged"
+                        class="stat-number">
+
+                        0
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <h3>Settled Claims</h3>
+
+                    <div
+                        id="settled"
+                        class="stat-number">
+
+                        0
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ========================================= -->
+        <!-- CLAIMS -->
+        <!-- ========================================= -->
+
+        <section
+            id="claims"
+            class="hidden">
+
+            <h1>Claims</h1>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Claim Number
+                            </th>
+
+                            <th>
+                                Policy Number
+                            </th>
+
+                            <th>
+                                Claim Type
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Risk
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="claimRows">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ========================================= -->
+        <!-- SUBMIT CLAIM -->
+        <!-- ========================================= -->
+
+        <section
+            id="submit"
+            class="hidden">
+
+            <h1>Submit New Claim</h1>
+
+
+            <div class="form-card">
+
+
+                <label>
+                    Policy
+                </label>
+
+                <select id="policy">
 
                 </select>
 
-            `;
 
-        }
+                <label>
+                    Claim Type
+                </label>
 
-
-        return "-";
-
-    }
-
-
-    // -------------------------------------------------
-    // CLAIMS OFFICER
-    // -------------------------------------------------
-
-    if (
-        role === "Claims Officer"
-    ) {
-
-        if (
-            claim.status === "Submitted" ||
-            claim.status === "Under Review" ||
-            claim.status === "Assessment Complete"
-        ) {
-
-            return `
-
-                <select
-                    onchange="changeStatus(
-                        ${claim.id},
-                        this.value
-                    )">
-
-                    <option
-                        value="${claim.status}"
-                    >
-
-                        ${claim.status}
-
-                    </option>
-
-                    <option value="Under Review">
-                        Under Review
-                    </option>
-
-                    <option value="Approved">
-                        Approved
-                    </option>
-
-                    <option value="Rejected">
-                        Rejected
-                    </option>
-
-                </select>
-
-            `;
-
-        }
+                <input
+                    type="text"
+                    id="type"
+                    placeholder="e.g. Vehicle Damage"
+                >
 
 
-        return "-";
+                <label>
+                    Incident Date
+                </label>
 
-    }
+                <input
+                    type="date"
+                    id="date"
+                >
 
 
-    // -------------------------------------------------
-    // SURVEYOR
-    // -------------------------------------------------
+                <label>
+                    Description
+                </label>
 
-    if (
-        role === "Surveyor"
-    ) {
+                <textarea
+                    id="desc"
+                    placeholder="Describe the incident">
+                </textarea>
 
-        if (
-            claim.status === "Submitted" ||
-            claim.status === "Under Review"
-        ) {
 
-            return `
+                <label>
+                    Claim Amount
+                </label>
+
+                <input
+                    type="number"
+                    id="amount"
+                    placeholder="Enter amount"
+                >
+
 
                 <button
                     type="button"
-                    onclick="submitAssessment(
-                        ${claim.id}
-                    )">
+                    onclick="submitClaim()">
 
-                    Assess
+                    Submit Claim
 
                 </button>
 
-            `;
 
-        }
+                <div
+                    id="submitMsg"
+                    class="message">
 
+                </div>
 
-        return "-";
+            </div>
 
-    }
+        </section>
 
 
-    // -------------------------------------------------
-    // FINANCE OFFICER
-    // -------------------------------------------------
 
-    if (
-        role === "Finance Officer"
-    ) {
+        <!-- ========================================= -->
+        <!-- AUDIT LOGS -->
+        <!-- ========================================= -->
 
-        if (
-            claim.status === "Approved"
-        ) {
+        <section
+            id="audit"
+            class="hidden">
 
-            return `
+            <h1>Audit Logs</h1>
 
-                <button
-                    type="button"
-                    onclick="settleClaim(
-                        ${claim.id}
-                    )">
 
-                    Settle
+            <div class="table-container">
 
-                </button>
+                <table>
 
-            `;
+                    <thead>
 
-        }
+                        <tr>
 
+                            <th>
+                                Action
+                            </th>
 
-        return "-";
+                            <th>
+                                Entity
+                            </th>
 
-    }
+                            <th>
+                                Entity ID
+                            </th>
 
+                            <th>
+                                Details
+                            </th>
 
-    // -------------------------------------------------
-    // POLICYHOLDER
-    // -------------------------------------------------
+                            <th>
+                                Date & Time
+                            </th>
 
-    return "-";
+                        </tr>
 
-}
+                    </thead>
 
 
-// =====================================================
-// CHANGE CLAIM STATUS
-// =====================================================
+                    <tbody id="auditRows">
 
-async function changeStatus(
-    claimId,
-    status
-) {
+                    </tbody>
 
-    try {
+                </table>
 
-        await req(
-            `/claims/${claimId}/status`,
-            {
+            </div>
 
-                method: "PATCH",
+        </section>
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
 
-                body: JSON.stringify({
-                    status: status
-                })
+    </main>
 
-            }
-        );
+</div>
 
 
-        await loadClaims();
 
-        await loadDashboard();
+<!-- ================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ================================================= -->
 
+<script src="script.js"></script>
 
-    } catch (error) {
+</body>
 
-        alert(
-            error.message
-        );
-
-        await loadClaims();
-
-    }
-
-}
-
-
-// =====================================================
-// SUBMIT CLAIM
-// =====================================================
-
-async function submitClaim() {
-
-    const policy =
-        document.getElementById(
-            "policy"
-        );
-
-    const type =
-        document.getElementById(
-            "type"
-        );
-
-    const date =
-        document.getElementById(
-            "date"
-        );
-
-    const description =
-        document.getElementById(
-            "desc"
-        );
-
-    const amount =
-        document.getElementById(
-            "amount"
-        );
-
-    const message =
-        document.getElementById(
-            "submitMsg"
-        );
-
-
-    if (
-        !policy ||
-        !type ||
-        !date ||
-        !description ||
-        !amount
-    ) {
-
-        if (message) {
-
-            message.textContent =
-                "Claim form is not configured correctly.";
-
-        }
-
-        return;
-
-    }
-
-
-    try {
-
-        const data =
-            await req(
-                "/claims",
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        policy_id:
-                            Number(
-                                policy.value
-                            ),
-
-                        claim_type:
-                            type.value,
-
-                        incident_date:
-                            date.value,
-
-                        description:
-                            description.value,
-
-                        amount:
-                            Number(
-                                amount.value
-                            )
-
-                    })
-
-                }
-            );
-
-
-        if (message) {
-
-            message.textContent =
-                `${data.message}. Risk: ${data.risk_flag}`;
-
-        }
-
-
-        await loadDashboard();
-
-        await loadClaims();
-
-
-    } catch (error) {
-
-        if (message) {
-
-            message.textContent =
-                error.message;
-
-        }
-
-    }
-
-}
-
-
-// =====================================================
-// SURVEYOR ASSESSMENT
-// =====================================================
-
-async function submitAssessment(
-    claimId
-) {
-
-    const surveyorName =
-        prompt(
-            "Enter Surveyor Name:"
-        );
-
-
-    if (!surveyorName) {
-
-        return;
-
-    }
-
-
-    const damageLevel =
-        prompt(
-            "Damage Level (Low / Medium / High):"
-        );
-
-
-    if (!damageLevel) {
-
-        return;
-
-    }
-
-
-    const assessedAmount =
-        prompt(
-            "Enter Assessed Amount:"
-        );
-
-
-    if (!assessedAmount) {
-
-        return;
-
-    }
-
-
-    const remarks =
-        prompt(
-            "Enter Assessment Remarks:"
-        );
-
-
-    try {
-
-        const result =
-            await req(
-                `/claims/${claimId}/assessment`,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        surveyor_name:
-                            surveyorName,
-
-                        damage_level:
-                            damageLevel,
-
-                        assessed_amount:
-                            Number(
-                                assessedAmount
-                            ),
-
-                        remarks:
-                            remarks || ""
-
-                    })
-
-                }
-            );
-
-
-        alert(
-            result.message
-        );
-
-
-        await loadClaims();
-
-        await loadDashboard();
-
-
-    } catch (error) {
-
-        alert(
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// SETTLEMENT
-// =====================================================
-
-async function settleClaim(
-    claimId
-) {
-
-    const approvedAmount =
-        prompt(
-            "Enter Approved Settlement Amount:"
-        );
-
-
-    if (!approvedAmount) {
-
-        return;
-
-    }
-
-
-    if (
-        Number(approvedAmount) <= 0
-    ) {
-
-        alert(
-            "Settlement amount must be greater than 0."
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        const result =
-            await req(
-                `/claims/${claimId}/settlement`,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        approved_amount:
-                            Number(
-                                approvedAmount
-                            )
-
-                    })
-
-                }
-            );
-
-
-        alert(
-            result.message
-        );
-
-
-        await loadClaims();
-
-        await loadDashboard();
-
-
-    } catch (error) {
-
-        alert(
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// AUDIT LOGS
-// =====================================================
-
-async function loadAudit() {
-
-    const rows =
-        document.getElementById(
-            "auditRows"
-        );
-
-
-    if (!rows) {
-
-        return;
-
-    }
-
-
-    try {
-
-        const logs =
-            await req(
-                "/audit-logs"
-            );
-
-
-        rows.innerHTML =
-            logs.map(function (log) {
-
-                return `
-
-                    <tr>
-
-                        <td>
-                            ${log.action}
-                        </td>
-
-                        <td>
-                            ${log.entity}
-                        </td>
-
-                        <td>
-                            ${log.entity_id || ""}
-                        </td>
-
-                        <td>
-                            ${log.details || ""}
-                        </td>
-
-                        <td>
-                            ${new Date(
-                                log.created_at
-                            ).toLocaleString()}
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-
-    } catch (error) {
-
-        rows.innerHTML = `
-
-            <tr>
-
-                <td colspan="5">
-
-                    ${error.message}
-
-                </td>
-
-            </tr>
-
-        `;
-
-    }
-
-}
-
-
-// =====================================================
-// LOGOUT
-// =====================================================
-
-function logout() {
-
-    localStorage.removeItem(
-        "claimflow_token"
-    );
-
-    token = null;
-
-    current = null;
-
-    location.reload();
-
-}
-
-
-// =====================================================
-// MAKE FUNCTIONS AVAILABLE TO HTML ONCLICK
-// =====================================================
-
-window.login =
-    login;
-
-window.showRegister =
-    showRegister;
-
-window.showLogin =
-    showLogin;
-
-window.registerUser =
-    registerUser;
-
-window.openApp =
-    openApp;
-
-window.show =
-    show;
-
-window.loadDashboard =
-    loadDashboard;
-
-window.loadClaims =
-    loadClaims;
-
-window.loadPolicies =
-    loadPolicies;
-
-window.changeStatus =
-    changeStatus;
-
-window.submitClaim =
-    submitClaim;
-
-window.submitAssessment =
-    submitAssessment;
-
-window.settleClaim =
-    settleClaim;
-
-window.loadAudit =
-    loadAudit;
-
-window.logout =
-    logout;
-
-
-// =====================================================
-// AUTO LOGIN
-// =====================================================
-
-if (token) {
-
-    openApp();
-
-}
+</html>
