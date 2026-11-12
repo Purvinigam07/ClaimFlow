@@ -1,9 +1,7 @@
 let token = localStorage.getItem("claimflow_token");
 let current = null;
 
-const api = () => {
-    return "http://127.0.0.1:8000/api";
-};
+const API = "https://claimflow-api-2026-cfehbyftescvh3g5.koreacentral-01.azurewebsites.net/api";
 
 
 // ================= API REQUEST =================
@@ -17,7 +15,7 @@ async function req(path, opt = {}) {
         } : {})
     };
 
-    let r = await fetch(api() + path, opt);
+  let r = await fetch(API + path, opt);
 
     let d = await r.json().catch(() => ({
         detail: "Server error"
