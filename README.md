@@ -224,3 +224,8 @@ AI tools were used as development assistance during the project. The use of AI a
 **Completed**
 
 The main ClaimFlow development, cloud integration, deployment, authentication, database implementation, storage integration, analytics, and testing have been completed.
+
+## Project Team
+
+- Purvi Nigam — Project Development & Cloud Integration
+- Naman Verma — Backend, Database & Project Development
